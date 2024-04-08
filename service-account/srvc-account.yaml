@@ -1,0 +1,133 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: spinkube-service-account
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: spinkube-service-account
+  annotations:
+    kubernetes.io/service-account.name: spinkube-service-account
+type: kubernetes.io/service-account-token
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: spinkube-role
+rules:
+  - nonResourceURLs: 
+      - /metrics
+    verbs:
+      - get
+  - apiGroups:
+      - ""
+      - extensions
+      - batch
+      - apps
+      - gateway.kyma-project.io
+      - servicecatalog.k8s.io
+      - apiextensions.k8s.io
+      - node.k8s.io
+      - rbac.authorization.k8s.io
+      - admissionregistration.k8s.io
+      - coordination.k8s.io
+      - cert-manager.io
+      - acme.cert-manager.io
+      - route.openshift.io
+      - certificates.k8s.io
+      - authorization.k8s.io
+      - gateway.networking.k8s.io
+      - networking.k8s.io
+      - apiregistration.k8s.io
+      - authentication.k8s.io
+      - apps
+      - core.spinoperator.dev
+    resources:
+      - deployments
+      - replicasets
+      - pods
+      - pods/log
+      - pods/portforward
+      - jobs
+      - configmaps
+      - apirules
+      - serviceinstances
+      - servicebindings
+      - services
+      - secrets
+      - customresourcedefinitions
+      - runtimeclasses
+      - serviceaccounts
+      - clusterroles
+      - clusterrolebindings
+      - roles
+      - rolebindings
+      - mutatingwebhookconfigurations
+      - validatingwebhookconfigurations
+      - namespaces
+      - leases
+      - secrets
+      - issuers
+      - issuers/status
+      - certificates
+      - certificates/finalizers
+      - certificates/status
+      - certificaterequests
+      - certificaterequests/finalizers
+      - certificaterequests/status
+      - signers
+      - clusterissuers
+      - clusterissuers/status
+      - events
+      - challenges
+      - challenges/finalizers
+      - challenges/status
+      - orders
+      - orders/finalizers
+      - orders/status
+      - routes/custom-host
+      - certificatesigningrequests
+      - certificatesigningrequests/status
+      - subjectaccessreviews
+      - gateways
+      - gateways/finalizers
+      - httproutes
+      - httproutes/finalizers
+      - ingresses
+      - ingresses/finalizers
+      - apiservices
+      - nodes
+      - tokenreviews
+      - deployments/status
+      - spinappexecutors
+      - spinappexecutors/status
+      - spinappexecutors/finalizers
+      - spinapps
+      - spinapps/status
+      - spinapps/finalizers
+    verbs:
+      - create
+      - update
+      - patch
+      - delete
+      - get
+      - list
+      - watch
+      - deletecollection
+      - approve
+      - sign
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: spinkube-role-binding
+subjects:
+  - kind: ServiceAccount
+    name: spinkube-service-account
+    namespace: srvc-account
+roleRef:
+  kind: ClusterRole
+  name: spinkube-role
+  apiGroup: rbac.authorization.k8s.io
+---
