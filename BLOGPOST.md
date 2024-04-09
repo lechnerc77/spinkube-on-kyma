@@ -19,13 +19,15 @@ In addition, I wanted to check if the Kyma environment on an SAP BTP trial poses
 
 To get started you must first manually enable Kyma in your SAP BTP subaccount. The provisioning takes some time. After that you can access the Kyma console via the URL that is provided in the subaccount overview as well as download the `kubeconfig` file that you need to access the cluster via `kubectl`. To do so you must have the `kubectl` installed on your machine. However, this is not sufficient to access the cluster.
 
-Authenticating with Kyma is a (in my opinion) unnecessary challenge as it leverages the [OIDC-login plugin](https://github.com/int128/kubelogin) for kubectl. You find a description of the setup [here]](https://learning.sap.com/learning-journeys/deliver-side-by-side-extensibility-based-on-sap-btp-kyma-runtime/setting-and-configuring-kubectl-for-kyma_b3d25bea-0ef5-498e-bd15-10ef0c23ed06). This works fine when on a Mac but can give you some headaches on a Windows and on Linux machine especially when combined with restrictive setups in corporate environments. For Windows I can only recommend installing [krew](https://krew.sigs.k8s.io/) via [chocolatey](https://chocolatey.org/) and then install the OIDC plugin via `kubectl krew install oidc-login`. At least for me that was the only way to get this working on Windows.
+Authenticating with Kyma is a (in my opinion) unnecessary challenge as it leverages the [OIDC-login plugin](https://github.com/int128/kubelogin) for kubectl. You find a description of the setup [here](https://learning.sap.com/learning-journeys/deliver-side-by-side-extensibility-based-on-sap-btp-kyma-runtime/setting-and-configuring-kubectl-for-kyma_b3d25bea-0ef5-498e-bd15-10ef0c23ed06). This works fine when on a Mac but can give you some headaches on a Windows and on Linux machine especially when combined with restrictive setups in corporate environments. For Windows I can only recommend installing [krew](https://krew.sigs.k8s.io/) via [chocolatey](https://chocolatey.org/) and then install the OIDC plugin via `kubectl krew install oidc-login`. At least for me that was the only way to get this working on Windows.
 
 So, we do one extra hop and create a service account that we can use to authenticate with the Kyma cluster.
 
 ### Creating a service account
 
-To get rid of the OIDC flow and the browser-based login, the next step I did was to create a *service account* and a `kubeconfig` that contains the necessary roles. The procedure in general is described in a developer tutorial [here](https://developers.sap.com/tutorials/kyma-create-service-account.html). Quite some adjustments are necessary as you need a lot more resources, API groups and verbs to get the Spin operator and its dependencies up and running.
+To get rid of the OIDC flow and the browser-based login, the next step I did was to create a *service account* and a `kubeconfig` that contains the necessary roles. The procedure in general is described in a developer tutorial [here](https://developers.sap.com/tutorials/kyma-create-service-account.html).
+
+Quite some adjustments are necessary as you need access a lot more resources, API groups and verbs to get the Spin operator and its dependencies up and running.
 
 Let's quickly walk through the steps:
 
@@ -196,26 +198,23 @@ Time to check if the setup is working.
 
 ### Deploy the first application
 
-The team behind SpinKube provides some sample apps in their spin operator [repository](https://github.com/spinkube/spin-operator/) that you can use to test the setup and deploy a simple hello world app. 
-Now there is (when writing this blog post, PR is open) a small glitch in the documentation. Instead of:
-
-```bash
-kubectl apply -f https://github.com/spinkube/spin-operator/blob/main/config/samples/simple.yaml
-```
-
-which results in the error `error: error parsing https://github.com/spinkube/spin-operator/blob/main/config/samples/simple.yaml: error converting YAML to JSON: yaml: line 206: mapping values are not allowed in this context`.
-
-You need to reference the raw file on GitHub:
+The team behind SpinKube provides some sample apps in their spin operator [repository](https://github.com/spinkube/spin-operator/) that you can use to test the setup and deploy a simple hello world app. Make sure that you reference the *raw* file from GitHub via:
 
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/spinkube/spin-operator/main/config/samples/simple.yaml
 ```
 
-The service is available:
+First we check that the service is available:
 
 ![SpinKube sample app service](./assets/app.png)
 
-and you can also access the sample app after a port fowrward (`kubectl --kubeconfig ./kubeconfig.yaml port-forward services/simple-spinapp 8080:80`) via curl:
+Looks good, so after a port-forward via:
+
+```bash
+kubectl port-forward services/simple-spinapp 8080:80
+```
+
+you can access the sample app via curl:
 
 ![SpinKube sample app call result via CURL](./assets/response.png)
 
@@ -223,7 +222,7 @@ So full success, SpinKube is up and running in a Kyma environment.
 
 ## But why ...?
 
-First of all, I wanted to see if there are technical obstacles that the Kyma environment might have that prevent the installation of SpinKube. As you can see there are none.
+First of all, I wanted to see if there are technical obstacles that the Kyma environment might have that prevent the installation of SpinKube. As you can see there are none even on a trial landscape.
 
 Besides the technical feasibility the question that remains is: Why would you want to use SpinKube in a Kyma environment? The answer is SpinKube's value proposition mentioned in the beginning: a tool to deploy WebAssembly modules into a Kubernetes environment which can be useful in various scenarios, especially when you want to deploy small, portable, and fast applications. This makes it possible to optimize the utilization of your cluster and/or use smaller clusters for the same workload.
 
